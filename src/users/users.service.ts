@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Users, UsersDocument } from './schema/user.schema';
 import { Model, Types } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
+import { RealtimeService } from 'src/realtime/realtime.service';
 
 interface UserData {
   name: string;
@@ -13,11 +14,27 @@ interface UserData {
 export class UsersService {
   constructor(
     @InjectModel(Users.name) private usersModel: Model<UsersDocument>,
+    private readonly realTimeService: RealtimeService,
   ) {}
 
-  async getUsers(): Promise<any> {
+  async getUsers(name?: string, email?: string, role?: string): Promise<any> {
     try {
-      const result = await this.usersModel.find().exec();
+      interface Query {
+        name?: string;
+        email?: string;
+        role?: string;
+      }
+      const query: Query = {};
+      if (name) {
+        query.name = name;
+      }
+      if (email) {
+        query.email = email;
+      }
+      if (role) {
+        query.role = role;
+      }
+      const result = await this.usersModel.find(query).exec();
       return result;
     } catch (err) {
       throw new HttpException(
@@ -30,7 +47,9 @@ export class UsersService {
   async postUsers(dto: CreateUserDto) {
     try {
       console.log(dto);
-      await this.usersModel.create(dto);
+      const result = await this.usersModel.create(dto);
+      const newObj = { date: Date.now(), ...result };
+      this.realTimeService.emit('created', newObj);
       return { message: 'user created succesfully' };
     } catch (err) {
       throw new HttpException(err.message, HttpStatus.BAD_REQUEST);

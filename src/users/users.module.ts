@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Users, UsersSchema } from './schema/user.schema';
+import { RealtimeModule } from 'src/realtime/realtime.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { Users, UsersSchema } from './schema/user.schema';
         schema: UsersSchema,
       },
     ]),
+    RealtimeModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
